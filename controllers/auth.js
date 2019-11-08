@@ -51,7 +51,9 @@ exports.createUser = async (req, res, next) => {
         return res.status(200).json({message: 'User created!'});
 
     } catch (err) {
-        res.status(500).json({message: err});
+        const error = new Error('Something went wrong!');
+
+        return next(error);
     }
 }
 
@@ -63,7 +65,10 @@ exports.login = async (req, res, next) => {
         const user = await User.findOne({email: email});
 
         if(!user) {
-            return res.status(404).json({message: 'User with that email not found!'});
+            const error = new Error('User with that email not found!');
+            error.status(404);
+
+            return next(error);
         }
 
         const hash = await bcrypt.compare(password, user.password);
@@ -79,61 +84,8 @@ exports.login = async (req, res, next) => {
 
         }
     } catch (err) {
-        res.status(500).json({message: 'Something went wrong!'});
+        const error = new Error('Something went wrong!');
+
+        return next(error);
     }
-}
-
-exports.getContacts = async (req, res, next) => {
-    const user = req.user;
-
-
-    try {
-        const users = await User.find({ _id: { $not: { $eq: new Mongoose.Types.ObjectId(user._id)} } });
-        const rooms = await Room.find({users: { $in: [ new Mongoose.Types.ObjectId(user._id) ] } });
-
-
-        const contacts = users.map( user => {
-                const {nickname} = user;
-
-                for( room of rooms) {
-
-                    for( roomUsersID of room.users) {
-                        if( String(roomUsersID) === String(user._id) ) {
-
-                            return {
-                                _id: room._id,
-                                type: 'room',
-                                nickname
-                            };
-                        }
-                    }
-                }
-
-                return {
-                    _id: user._id,
-                    type: 'user',
-                    nickname
-                }
-            });
-        
-        res.status(200).json({contacts});
-    
-    } catch(err) {
-        res.status(500).json({message: 'Something went wrong!'});
-    }
-}
-exports.createContact = (req, res, next) => {
-    const loggedUser = req.user;
-    const userID = req.body.userID;
-
-    const newRoom = new Room({
-        messages: [],
-        users: [
-            loggedUser._id,
-            userID
-        ],
-        type: 'private'
-    });
-
-    console.log(newRoom);
 }

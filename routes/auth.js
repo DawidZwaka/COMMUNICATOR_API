@@ -12,7 +12,6 @@ const router = express.Router();
 const authController = require('../controllers/auth');
 const { body } = require('express-validator');
 const ifErrSendRes = require('../middleware/ifErrSendRes');
-const isAuth = require('../middleware/isAuth');
 
 /*
  ██████╗ ██████╗ ███╗   ██╗███████╗████████╗ █████╗ ███╗   ██╗███████╗
@@ -88,9 +87,5 @@ router.post('/login', [
         .isLength({min: 8, max: 200})
     
 ], ifErrSendRes ,authController.login);
-
-router.get('/contacts', isAuth, authController.getContacts);
-
-router.post('/contacts', isAuth, authController.createContact);
 
 module.exports = router;
