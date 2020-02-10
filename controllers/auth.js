@@ -13,19 +13,19 @@ const IO = require('../socket');
 ██║     ██║   ██║██║╚██╗██║╚════██║   ██║   ██╔══██║██║╚██╗██║╚════██║
 ╚██████╗╚██████╔╝██║ ╚████║███████║   ██║   ██║  ██║██║ ╚████║███████║
  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝
-*/                                                                      
-
-const saltRounds = 10;
-const jwtPrivateKey = '#ym_A2w5^&]Zks65\6??*2rT?3qBjYT:MQ';
-
+*/
 /*
- ██████╗ ██████╗ ███╗   ██╗████████╗██████╗  ██████╗ ██╗     ██╗     ███████╗██████╗ ███████╗
+██████╗ ██████╗ ███╗   ██╗████████╗██████╗  ██████╗ ██╗     ██╗     ███████╗██████╗ ███████╗
 ██╔════╝██╔═══██╗████╗  ██║╚══██╔══╝██╔══██╗██╔═══██╗██║     ██║     ██╔════╝██╔══██╗██╔════╝
 ██║     ██║   ██║██╔██╗ ██║   ██║   ██████╔╝██║   ██║██║     ██║     █████╗  ██████╔╝███████╗
 ██║     ██║   ██║██║╚██╗██║   ██║   ██╔══██╗██║   ██║██║     ██║     ██╔══╝  ██╔══██╗╚════██║
 ╚██████╗╚██████╔╝██║ ╚████║   ██║   ██║  ██║╚██████╔╝███████╗███████╗███████╗██║  ██║███████║
- ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚══════╝
-*/                                                                                             
+╚═════╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚══════╝
+*/
+
+const saltRounds = 10;
+const jwtPrivateKey = '#ym_A2w5^&]Zks65\6??*2rT?3qBjYT:MQ';
+
 
 exports.createUser = async (req, res, next) => {
     const {nickname, email, password} = req.body;
@@ -40,8 +40,8 @@ exports.createUser = async (req, res, next) => {
 
     try {
         const newUser = new User({
-            nickname, 
-            email, 
+            nickname,
+            email,
             password: hashedPassword,
             accountType: 'customer'});
 
@@ -54,8 +54,8 @@ exports.createUser = async (req, res, next) => {
         const error = new Error('Something went wrong!');
 
         return next(error);
-    }
 }
+    }
 
 exports.login = async (req, res, next) => {
     const {email, password} = req.body;
@@ -75,7 +75,7 @@ exports.login = async (req, res, next) => {
 
         if(hash) {
 
-            const userToken = jwt.sign({
+           const userToken = jwt.sign({
                 userID: user._id,
                 email: user.email
             }, jwtPrivateKey);
@@ -84,6 +84,27 @@ exports.login = async (req, res, next) => {
 
         }
     } catch (err) {
+        const error = new Error('Something went wrong!');
+
+        return next(error);
+    }
+}
+
+exports.forgotPassword = async (req, res, next) => {
+    const { email } = req.body;
+
+    try {
+        const user = await User.findOne({email: email});
+
+        if(!user) {
+            const error = new Error("User not found");
+            error.status = 404;
+            
+            next(error);
+        }
+
+    } catch (err) {
+        console.log(err);
         const error = new Error('Something went wrong!');
 
         return next(error);
