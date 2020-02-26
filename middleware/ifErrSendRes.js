@@ -1,16 +1,14 @@
 const { validationResult } = require('express-validator');
 
 module.exports = (req, res, next) => {
-    const validation = validationResult(req);
-    if(validation.isEmpty() ) {
-        return next();
-    }
+	const validation = validationResult(req);
+	if (validation.isEmpty()) {
+		return next();
+	}
 
-    const parsedErrors = {};
+	const parsedErrors = validation.errors.map(err => {
+		return { name: err.param, value: err.msg };
+	});
 
-    validation.errors.forEach(err => {
-        parsedErrors[err.param] = err.msg 
-    });
-
-    return res.status(422).json(parsedErrors);
-}
+	return res.status(422).json(parsedErrors);
+};
