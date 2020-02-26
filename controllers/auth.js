@@ -99,8 +99,13 @@ exports.forgotPassword = async (req, res, next) => {
         if(!user) {
             const error = new Error("User not found");
             error.status = 404;
-            
+
             next(error);
+        } else {
+            return res.status(200).json({
+                header: "Well done!",
+                message: "Now check your email for next instructions."
+            });
         }
 
     } catch (err) {
