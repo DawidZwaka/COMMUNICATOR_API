@@ -14,6 +14,10 @@ const IO = require('../socket');
 ╚██████╗╚██████╔╝██║ ╚████║███████║   ██║   ██║  ██║██║ ╚████║███████║
  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝
 */
+
+const saltRounds = 10;
+const jwtPrivateKey = '#ym_A2w5^&]Zks65\6??*2rT?3qBjYT:MQ';
+
 /*
 ██████╗ ██████╗ ███╗   ██╗████████╗██████╗  ██████╗ ██╗     ██╗     ███████╗██████╗ ███████╗
 ██╔════╝██╔═══██╗████╗  ██║╚══██╔══╝██╔══██╗██╔═══██╗██║     ██║     ██╔════╝██╔══██╗██╔════╝
@@ -23,20 +27,29 @@ const IO = require('../socket');
 ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚══════╝
 */
 
-const saltRounds = 10;
-const jwtPrivateKey = '#ym_A2w5^&]Zks65\6??*2rT?3qBjYT:MQ';
-
 exports.createUser = async (req, res, next) => {
 	const { nickname, email, password } = req.body;
 	const errors = validationResult(req);
 
-	if (!errors.isEmpty()) {
-		return res.status(422).json(errors);
-	}
-
 	const hashedPassword = await bcrypt.hash(password, saltRounds);
 
 	try {
+		const user = await User.findOne({ nickname });
+
+		if (user) {
+			const errData = [
+				{
+					name: 'nickname',
+					value: 'User with that nickname exist.'
+				}
+			];
+			const err = new Error();
+			err.json = errData;
+			err.status = 422;
+
+			return next(err);
+		}
+
 		const newUser = new User({
 			nickname,
 			email,
@@ -44,14 +57,16 @@ exports.createUser = async (req, res, next) => {
 			accountType: 'customer'
 		});
 
-		await newUser.save();
+		const createdUser = await newUser.save();
+
+		await Room.findOneAndUpdate(
+			{ type: 'public' },
+			{ $push: { users: createdUser._id } }
+		);
 
 		return res.status(200).json({ message: 'User created!' });
 	} catch (err) {
-		console.log(err);
-		const error = new Error('Something went wrong!');
-
-		return next(error);
+		return next();
 	}
 };
 
@@ -82,9 +97,7 @@ exports.login = async (req, res, next) => {
 			res.status(200).json({ token: userToken });
 		}
 	} catch (err) {
-		const error = new Error('Something went wrong!');
-
-		return next(error);
+		return next();
 	}
 };
 
@@ -106,9 +119,6 @@ exports.forgotPassword = async (req, res, next) => {
 			});
 		}
 	} catch (err) {
-		console.log(err);
-		const error = new Error('Something went wrong!');
-
-		return next(error);
+		return next();
 	}
 };
